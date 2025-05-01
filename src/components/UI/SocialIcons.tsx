@@ -10,13 +10,13 @@ const SocialIcons = ({ size = 20, color }: SocialIconsProps) => {
     {
       name: 'LinkedIn',
       icon: <Linkedin size={size} />,
-      url: 'https://linkedin.com/',
+      url: 'https://linkedin.com/in/anshuarelly',
       ariaLabel: 'Visit Anshu on LinkedIn'
     },
     {
       name: 'Instagram',
       icon: <Instagram size={size} />,
-      url: 'https://instagram.com/',
+      url: 'https://instagram.com/anshuarelly?igshid=YmMyMTA2M2Y=',
       ariaLabel: 'Visit Anshu on Instagram'
     }
   ];
