@@ -1,4 +1,4 @@
-import { useState, FormEvent, useRef } from 'react';
+import { useState, useRef, FormEvent } from 'react';
 import emailjs from '@emailjs/browser';
 import TextField from '../UI/TextField';
 import SelectField from '../UI/SelectField';
@@ -7,11 +7,11 @@ import Button from '../UI/Button';
 const BrandingForm = () => {
   const form = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    from_name: '',
+    from_email: '',
     profession: '',
-    linkedinUrl: '',
-    goals: ''
+    linkedin_url: '',
+    message: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,32 +29,44 @@ const BrandingForm = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
-    
+
     try {
-      // Initialize EmailJS with your public key
+      // Initialize EmailJS
       emailjs.init("O1OKZP9-nne1L3Fb4");
+
+      const templateParams = {
+        template_subject: `New LinkedIn Branding Inquiry: ${formData.from_name}`,
+        form_type: "LinkedIn Personal Branding",
+        name: formData.from_name,
+        email: formData.from_email,
+        profession: formData.profession,
+        linkedin_url: formData.linkedin_url || "",
+        reason: "",
+        message: formData.message
+      };
       
+      console.log('BrandingForm templateParams:', templateParams);
+
       // Send the email using EmailJS
-      await emailjs.sendForm(
-        'service_koydh28', // EmailJS service ID
-        'template_woxoupg', // EmailJS template ID
-        form.current!,
-        'O1OKZP9-nne1L3Fb4' // Your EmailJS public key
+      const result = await emailjs.send(
+        'service_koydh28',
+        'template_woxoupg',
+        templateParams,
+        'O1OKZP9-nne1L3Fb4'
       );
 
-      setIsSubmitted(true);
-      setFormData({
-        name: '',
-        email: '',
-        profession: '',
-        linkedinUrl: '',
-        goals: ''
-      });
-      
-      // Reset success message after 5 seconds
-      setTimeout(() => {
-        setIsSubmitted(false);
-      }, 5000);
+      if (result.text === 'OK') {
+        setIsSubmitted(true);
+        setFormData({
+          from_name: '',
+          from_email: '',
+          profession: '',
+          linkedin_url: '',
+          message: ''
+        });
+      } else {
+        throw new Error('Failed to send message');
+      }
     } catch (err) {
       setError('Failed to send message. Please try again later.');
       console.error('EmailJS Error:', err);
@@ -64,109 +76,100 @@ const BrandingForm = () => {
   };
 
   const professionOptions = [
-    { value: '', label: 'Select your profession' },
-    { value: 'founder', label: 'Founder' },
-    { value: 'agency_owner', label: 'Agency Owner' },
     { value: 'student', label: 'Student' },
     { value: 'professional', label: 'Professional' },
+    { value: 'founder', label: 'Founder' },
+    { value: 'agency_owner', label: 'Agency Owner' },
     { value: 'other', label: 'Other' }
   ];
 
-  return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-      <div className="p-8">
-        <h3 className="text-2xl font-bold mb-6 text-gray-800">
-          Work With Me
-        </h3>
-        
-        {isSubmitted ? (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-5 rounded-lg">
-            <h4 className="font-bold text-lg mb-1">Thank you for your inquiry!</h4>
-            <p>I'll review your information and get back to you within 1-2 business days.</p>
-          </div>
-        ) : (
-          <form ref={form} onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <TextField
-                label="Full Name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-              
-              <TextField
-                label="Email Address"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-              
-              <SelectField
-                label="Your Profession"
-                name="profession"
-                value={formData.profession}
-                onChange={handleChange}
-                options={professionOptions}
-                required
-              />
-              
-              <TextField
-                label="LinkedIn Profile URL"
-                name="linkedinUrl"
-                value={formData.linkedinUrl}
-                onChange={handleChange}
-                required
-              />
-              
-              <div>
-                <label htmlFor="goals" className="block text-sm font-medium text-gray-700 mb-1">
-                  Main Goals
-                </label>
-                <textarea
-                  id="goals"
-                  name="goals"
-                  rows={4}
-                  value={formData.goals}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#ff6100] focus:border-[#ff6100]"
-                  placeholder="What are your main goals for improving your LinkedIn presence?"
-                  required
-                ></textarea>
-              </div>
-              
-              {error && (
-                <div className="text-red-600 text-sm">
-                  {error}
-                </div>
-              )}
-              
-              <Button
-                type="submit"
-                primary
-                fullWidth
-                className="mt-6"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Sending...' : 'Submit Inquiry'}
-              </Button>
-            </div>
-          </form>
-        )}
-        
-        <div className="mt-6 text-center text-gray-600 text-sm">
-          You can also reach me directly at{' '}
-          <a 
-            href="mailto:anshu.arelly17@gmail.com" 
-            className="text-[#ff6100] hover:underline"
-          >
-            anshu.arelly17@gmail.com
-          </a>
-        </div>
+  if (isSubmitted) {
+    return (
+      <div className="text-center p-6 bg-green-50 rounded-lg">
+        <h3 className="text-xl font-semibold text-green-600 mb-2">Thank You!</h3>
+        <p className="text-gray-600">
+          Your message has been sent successfully. I'll get back to you soon!
+        </p>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <>
+      <form ref={form} onSubmit={handleSubmit}>
+        <div className="space-y-4">
+          <TextField
+            label="Full Name"
+            name="from_name"
+            value={formData.from_name}
+            onChange={handleChange}
+            required
+          />
+          
+          <TextField
+            label="Email Address"
+            name="from_email"
+            type="email"
+            value={formData.from_email}
+            onChange={handleChange}
+            required
+          />
+          
+          <SelectField
+            label="Your Profession"
+            name="profession"
+            value={formData.profession}
+            onChange={handleChange}
+            options={professionOptions}
+            required
+          />
+          
+          <TextField
+            label="LinkedIn Profile URL"
+            name="linkedin_url"
+            value={formData.linkedin_url}
+            onChange={handleChange}
+            required
+          />
+          
+          <div>
+            <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+              Main Goals
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              rows={4}
+              value={formData.message}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#ff6100] focus:border-[#ff6100]"
+              placeholder="What are your main goals for improving your LinkedIn presence?"
+              required
+            ></textarea>
+          </div>
+          
+          {error && (
+            <div className="text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+          
+          <Button type="submit" primary disabled={isSubmitting}>
+            {isSubmitting ? 'Sending...' : 'Send Message'}
+          </Button>
+        </div>
+      </form>
+
+      <div className="mt-6 text-center text-gray-600 text-sm">
+        You can also reach me directly at{' '}
+        <a 
+          href="mailto:anshu.arelly17@gmail.com" 
+          className="text-[#ff6100] hover:underline"
+        >
+          anshu.arelly17@gmail.com
+        </a>
+      </div>
+    </>
   );
 };
 
